@@ -3,6 +3,7 @@ class GridSystemClient {
         this.matrix = config.playerMatrix;
         this.redDoorCoords = config.redDoorCoords;
         this.areaTitle = config.playerAreaTitle;
+        this.itemsArr = config.itemsArr;
 
         this.uiContext = this.getContext(0, 0, "transparent", false);
         this.outlineContext = this.getContext(0, 0, "white");
@@ -18,16 +19,6 @@ class GridSystemClient {
         // this.p1 = {color: "orange", lable: 2, id: this.students[0]};
         // this.p2 = {color: "pink", lable: 3, id: this.students[1]};
         this.playersArr = config.playersArr;
-
-        this.items = {
-            1: {color: "#4488FF", playerId: null},
-            20: {color: "#111", itemId: "💰"},
-            30: {color: "#111", itemId: "🔒"}
-        }
-        this.details = {
-            [this.items[20].itemId]: {font:"17px Times New Roman",rowValue:21},
-            [this.items[30].itemId]: {font:"23px Times New Roman",rowValue:21,text:"1",txtRow:22,txtCol:12}
-        }
 
         //document.addEventListener("keydown", this.movePlayer);
     }
@@ -128,16 +119,16 @@ class GridSystemClient {
         let playerId = null;
         let itemId = null;
 
-        this.playersArr.forEach((player) => {
-            if (cellVal === player.lable) {
-                color = player.color;
-                playerId = player.id;
-            }
-        });
+        const getPlayerObject = this.playersArr.find(object => object.lable === cellVal);
+        if (getPlayerObject) {
+            color = getPlayerObject.color;
+            playerId = getPlayerObject.id;
+        }
 
-        if(this.items[cellVal] === undefined) { return {color, playerId, itemId}; }
-        itemId = this.items[cellVal].itemId
-        color = this.items[cellVal].color
+        const getItemObject = this.itemsArr.find(object => object.itemLable === cellVal);
+        if (getItemObject === undefined) return {color, playerId, itemId};
+        itemId = getItemObject.itemId;
+        color = getItemObject.color;
 
         return {color, playerId, itemId};
     }
@@ -159,11 +150,12 @@ class GridSystemClient {
         }
     }
     renderItems(cellDetail, row, col) {
-        if (this.details[cellDetail.itemId] === undefined) {return}
+        const getItemObject = this.itemsArr.find(object => object.itemId === cellDetail.itemId);
+        if (getItemObject.itemId === null) return;
+        this.outlineContext.font = getItemObject.font;
 
-        this.outlineContext.font = this.details[cellDetail.itemId].font;
-        this.outlineContext.fillText(cellDetail.itemId, col * (this.cellSize + this.padding) + 3,
-            row * (this.cellSize + this.padding) + this.details[cellDetail.itemId].rowValue);
+        this.outlineContext.fillText(getItemObject.itemId, col * (this.cellSize + this.padding) + 3,
+            row * (this.cellSize + this.padding) + getItemObject.rowValue);
     }
     
 
@@ -196,6 +188,7 @@ class GridSystemClient {
 
                 const cellVal = this.matrix[row][col];
                 const cellDetail = this.setColorAndId(cellVal);
+                // const itemDetail = this.setItemColorAndId(cellVal);
 
                 //when cellVal === 0 (cellDetail.color === black)
                 this.renderBlankCell(cellDetail, row, col); 

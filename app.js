@@ -20,6 +20,7 @@ console.log("Server listening at " + PORT);
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
 const { Player } = require('./player');
+const { Item } = require('./item');
 const { allMatrixes } = require('./maps');
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
@@ -64,6 +65,23 @@ class GridSystem {
             this.p2 = new Player({x: 2, y: 2, lable: 3, id: this.extraArr[1], area: "area1", color: "pink"})
         ];
 
+        this.itemsArr = [
+            this.item1 = new Item({itemLable: 1, itemId: null, color: "#4488FF", returnValue: false}),
+            this.item2 = new Item({itemLable: 20, itemId: "💰"}),
+            this.item3 = new Item({itemLable: 21, itemId: "🍍"}),
+            this.item4 = new Item({itemLable: 22, itemId: "🍇"}),
+            this.item5 = new Item({itemLable: 23, itemId: "🍎"}),
+            this.item6 = new Item({itemLable: 24, itemId: "🍓"}),
+            this.item7 = new Item({itemLable: 25, itemId: "🍒"}),
+            this.item8 = new Item({itemLable: 26, itemId: "📚"}),
+            this.item9 = new Item({itemLable: 27, itemId: "🧬"}),
+            this.item10 = new Item({itemLable: 28, itemId: "🎹"}),
+            this.item11 = new Item({itemLable: 29, itemId: "🍖"}),
+            
+        ];
+        // this.item1.returnValue = false;
+        console.log(this.itemsArr[0])
+
         this.playersArr.forEach((player) => {
             player.maxSteps = this.maxSteps;
             this.startingPoint(player);
@@ -77,10 +95,17 @@ class GridSystem {
     isValidMove(plyrSlot, x, y) {
         this.matrix = this.allMatrixes[plyrSlot.area].gridMatrix;
 
-        if (this.matrix[plyrSlot.y + y][plyrSlot.x + x] === 0) {
+        const cellVal = this.matrix[plyrSlot.y + y][plyrSlot.x + x];
+
+        if (cellVal  === 0) {
             return true;
         }
-        return false;
+
+        const getItemObject = this.itemsArr.find(object => object.itemLable === cellVal);
+        console.log(getItemObject);
+        if (getItemObject === undefined) return false;
+        return getItemObject.returnValue;
+        //return false;
     }
     
     updPosition(keyCode, plyrSlot) {
@@ -141,8 +166,9 @@ class GridSystem {
         const allMatrixes = this.allMatrixes;
         const playersArr = this.playersArr;
         const extraArr = this.extraArr;
+        const itemsArr = this.itemsArr;
 
-        io.emit(eventName, { allMatrixes, playersArr, extraArr });
+        io.emit(eventName, { allMatrixes, playersArr, extraArr, itemsArr });
     }
 }
 

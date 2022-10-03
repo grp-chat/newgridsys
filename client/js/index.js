@@ -378,6 +378,7 @@ sock.on('loadMatrix', (data) => {
             const config = {
                 playersArr: data.playersArr,
                 extraArr: data.extraArr,
+                itemsArr: data.itemsArr,
                 playerMatrix: data.allMatrixes[player.area].gridMatrix,
                 playerAreaTitle: data.allMatrixes[player.area].title,
                 redDoorCoords: data.allMatrixes[player.area].doors
@@ -401,6 +402,7 @@ sock.on('sendMatrix', (data) => {
             const config = {
                 playersArr: data.playersArr,
                 extraArr: data.extraArr,
+                itemsArr: data.itemsArr,
                 playerMatrix: data.allMatrixes[player.area].gridMatrix,
                 playerAreaTitle: data.allMatrixes[player.area].title,
                 redDoorCoords: data.allMatrixes[player.area].doors
