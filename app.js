@@ -21,7 +21,7 @@ console.log("Server listening at " + PORT);
 //------------------------------------------------------------------------------------------------------
 const { Player } = require('./player');
 const { Item } = require('./item');
-const { allMatrixes } = require('./maps');
+const { AllMatrixes } = require('./maps');
 //------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------
 
@@ -42,9 +42,10 @@ const getLockIdFromPassword = password => {
 }
 
 class GridSystem {
-    constructor(allMatrixes) {
-        this.allMatrixes = allMatrixes;
-        this.matrix = allMatrixes.area2;
+    constructor() {
+        this.allMatrixes = new AllMatrixes();
+        this.allMatrixesBackup = JSON.parse(JSON.stringify(new AllMatrixes()));
+        this.matrix = this.allMatrixes.area2;
         this.startingSteps = 500;
         this.maxSteps = 150;
         this.keyCodes = {
@@ -66,7 +67,7 @@ class GridSystem {
         ];
 
         this.itemsArr = [
-            this.item1 = new Item({itemLable: 1, itemId: null, color: "#4488FF", returnValue: false}),
+            this.item1 = new Item({itemLable: 1, itemId: "", color: "#4488FF", returnValue: false}),
             this.item2 = new Item({itemLable: 20, itemId: "💰"}),
             this.item3 = new Item({itemLable: 21, itemId: "🍍"}),
             this.item4 = new Item({itemLable: 22, itemId: "🍇"}),
@@ -77,16 +78,14 @@ class GridSystem {
             this.item9 = new Item({itemLable: 27, itemId: "🧬"}),
             this.item10 = new Item({itemLable: 28, itemId: "🎹"}),
             this.item11 = new Item({itemLable: 29, itemId: "🍖"}),
-            
+            this.item12 = new Item({itemLable: 30, itemId: "🔒", returnValue: false}),
         ];
-        // this.item1.returnValue = false;
-        console.log(this.itemsArr[0])
 
         this.playersArr.forEach((player) => {
             player.maxSteps = this.maxSteps;
             this.startingPoint(player);
+            
         });
-        
     }
 
     startingPoint(plyrSlot) {
@@ -97,15 +96,22 @@ class GridSystem {
 
         const cellVal = this.matrix[plyrSlot.y + y][plyrSlot.x + x];
 
-        if (cellVal  === 0) {
-            return true;
-        }
+        if (cellVal  === 0) return true;
 
-        const getItemObject = this.itemsArr.find(object => object.itemLable === cellVal);
-        console.log(getItemObject);
-        if (getItemObject === undefined) return false;
-        return getItemObject.returnValue;
+        return this.isThereAnItem(cellVal, plyrSlot);
         //return false;
+    }
+    isThereAnItem(cellVal, plyrSlot) {
+        const getItemObject = this.itemsArr.find(object => object.itemLable === cellVal);
+        if (getItemObject === undefined) return false;
+
+        if(getItemObject.itemId === "🔒") io.emit('chat-to-clients', `${plyrSlot.id} touched a lock`);;
+
+        if (getItemObject.returnValue === false) return false;
+        if (plyrSlot.inventory.length >= plyrSlot.maxInventory) return false;
+
+        plyrSlot.inventory += getItemObject.itemId 
+        return getItemObject.returnValue;
     }
     
     updPosition(keyCode, plyrSlot) {
@@ -138,7 +144,7 @@ class GridSystem {
     }
     enterDoorCheck(plyrSlot) {
         this.matrix = this.allMatrixes[plyrSlot.area].gridMatrix;
-        const areaObject = allMatrixes[plyrSlot.area].doors;
+        const areaObject = this.allMatrixes[plyrSlot.area].doors;
         const match = Object.values(areaObject).find(object => {
             return `${object.x},${object.y}` === `${plyrSlot.x},${plyrSlot.y}`;
         });
@@ -149,7 +155,7 @@ class GridSystem {
             plyrSlot.area = match.toArea;
             plyrSlot.x = match.appearingCoords.x;
             plyrSlot.y = match.appearingCoords.y;
-            this.matrix = allMatrixes[match.toArea].gridMatrix;
+            this.matrix = this.allMatrixes[match.toArea].gridMatrix;
             this.matrix[match.appearingCoords.y][match.appearingCoords.x] = plyrSlot.lable;
         }
     }
@@ -162,6 +168,20 @@ class GridSystem {
             plyrSlot.steps--;
         }
     }
+
+    resetMap() {
+        this.allMatrixes = new AllMatrixes();
+        // this.allMatrixes = JSON.parse(JSON.stringify(this.allMatrixesBackup));
+         //this.duplicateMatrix(matrix);
+         this.playersArr.forEach((player) => {
+            player.x = player.originX;
+            player.y = player.originY;
+            player.area = player.originArea;
+            player.inventory = "";  
+            this.startingPoint(player);
+         });
+         this.emitToUsers('sendMatrix');
+    }
     emitToUsers(eventName) {
         const allMatrixes = this.allMatrixes;
         const playersArr = this.playersArr;
@@ -173,7 +193,7 @@ class GridSystem {
 }
 
 //##############################################################################################################
-const gridSystem = new GridSystem(allMatrixes);
+const gridSystem = new GridSystem();
 
 io.sockets.on('connection', function (sock) {
 
@@ -198,6 +218,38 @@ io.sockets.on('connection', function (sock) {
 
     sock.on('chat-to-server', (data) => {
         io.emit('chat-to-clients', data);
+    });
+    sock.on('print-chat-on-canvas', data => {
+        const getPlayerObject = gridSystem.playersArr.find(object => object.id === data.nickname);
+        const message = data.message2;
+        // console.log(getPlayerObject)
+        const { x, y, area, id } = getPlayerObject;
+        io.emit('print-chat-on-canvas', { x, y, area, message, id })
+        
+    });
+
+    sock.on('useItem', (data) => {
+        
+        const emoji = (data.getNum - 1) * 2;
+        const playerId = data.studentId;
+        const gridSysPlyrKey = getPlayerObjectKey(playerId);
+        const itemLength = gridSystem[gridSysPlyrKey].inventory.length
+        if (emoji + 1 > itemLength || itemLength === 0) {
+            io.emit('chat-to-clients', `Wrong item slot selection`);
+            return
+        }
+        const remainingItem = gridSystem[gridSysPlyrKey].inventory.slice(0, emoji) + gridSystem[gridSysPlyrKey].inventory.slice(emoji+2, itemLength)
+        gridSystem[gridSysPlyrKey].inventory = remainingItem;
+        io.emit('chat-to-clients', `${playerId}'s item ${data.getNum} used`);
+        gridSystem.emitToUsers('sendMatrix');
+
+    });
+    sock.on('restartLevel', () => {
+
+        gridSystem.resetMap();
+
+        gridSystem.emitToUsers('sendMatrix');
+        
     });
 
 

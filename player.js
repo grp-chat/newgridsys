@@ -9,9 +9,13 @@ class Player {
         this.steps = config.steps || this.startingSteps;
         this.area = config.area || "area1";
         this.color = config.color || "grey";
-        this.defaultX = config.x;
-        this.defaultY = config.y;
+        this.originX = config.x;
+        this.originY = config.y;
+        this.originArea = config.area;
+        this.inventory = "";
+        this.maxInventory = 10;
     }
+
 }
 
 module.exports = {
