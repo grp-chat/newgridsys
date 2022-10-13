@@ -200,7 +200,7 @@ class GridSystemClient {
         // const getPlayerArea = playersArr.find(player => player.id === nickname);
 
         // console.log(this.matrix)
-        this.uiContext.fillText("player here says hello world", 20, 30);
+        this.uiContext.fillText(this.areaTitle, 20, 30);
         // this.uiContext.fillText(this.areaTitle, 20, 30);
     }
 
