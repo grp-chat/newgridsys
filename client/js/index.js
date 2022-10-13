@@ -73,7 +73,7 @@ const modalHeader = document.getElementById('modal-title');
 const modalBody = document.getElementById('modal-body');
 
 let matrixAreaRenderingHere = "";
-let typeWriterArr = [];
+let chatObjectsArr = [];
 // let text = "Text here Text here Text here Text here Text here Text here Text here Text here";
 // let i = 1;
 // let char;
@@ -137,7 +137,7 @@ function createChatDivs() {
         const message = `${nickname}: ${chatInput.value}`;
         const message2 = chatInput.value;
         sock.emit('chat-to-server', message);
-        sock.emit('print-chat-on-canvas', { message2, nickname });
+        sock.emit('createChatObject', { message2, nickname });
         chatInput.value = '';
     });
 
@@ -151,7 +151,6 @@ function createChatDivs() {
 
     return chatSec;
 }
-createChatDivs();
 
 function appendMessage(message) {
     const messageDiv = document.createElement('div');
@@ -220,18 +219,11 @@ function clientRender(data) {
     //     }
     // });
 }
-function typeWriterRender(x, y, playerId) {
-    //const test = new TypeWriter({x: 1, y: 3, cellSize: 27, padding: 2})
-    //test.typeWriter();
-    
-    typeWriterArr.forEach(typeWriter => {
-        typeWriter.justPrint();
-        console.log(typeWriter)
-    });
-}
+
 
 //FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
+createChatDivs();
 
 closeModalButton.addEventListener('click', () => {
     closeModal();
@@ -428,13 +420,30 @@ sock.on('chat-to-clients', data => {
     // }
     appendMessage(message);
 });
-sock.on('print-chat-on-canvas', data => {
-    if (matrixAreaRenderingHere === data.area) {
-        // console.log(data);
-        const printChatOnCanvas = new TypeWriter({ x: data.x, y: data.y, area: data.area, message: data.message, id: data.id});
-        printChatOnCanvas.typeWriter();
-        typeWriterArr.push(printChatOnCanvas);
+sock.on('createChatObject', data => {
+    // if (matrixAreaRenderingHere === data.area) { 
+    // }
+    const getChatObject = chatObjectsArr.find(chatObj => chatObj.id === data.id);
+    // console.log(chatObjectsArr.length);
+    if (!getChatObject) {
+        const chatObject = new ChatObject({ x: data.x, y: data.y, area: data.area, message: data.message, id: data.id});
+        chatObject.typeWriter();
+        chatObjectsArr.push(chatObject);
+    } else {
+        // const getChatObjectIndex = chatObjectsArr.findIndex(chatObj => chatObj.id === data.id);
+        const index = chatObjectsArr.indexOf(getChatObject);
+        chatObjectsArr[index].x = data.x;
+        chatObjectsArr[index].y = data.y;
+        chatObjectsArr[index].text = data.message;
+        chatObjectsArr[index].area = data.area;
+        chatObjectsArr[index].i = 1;
+        chatObjectsArr[index].char = "";
+        chatObjectsArr[index].typeWriter();
     }
+    // const {id, ...rest} = data;
+    
+
+    
 });
 
 sock.on('loadMatrix', (data) => {
@@ -443,7 +452,7 @@ sock.on('loadMatrix', (data) => {
     studentsArr = extraArr;
 
     clientRender(data);
-    typeWriterRender();
+    
     
 });
 
@@ -456,13 +465,13 @@ sock.on('sendMatrix', (data) => {
 
     clientRender(data);
     
-    typeWriterArr.forEach(typeWriter => {
-        const getPlayerObject = data.playersArr.find(object => object.id === typeWriter.id);
-        typeWriter.x = getPlayerObject.x;
-        typeWriter.y = getPlayerObject.y;
-        typeWriter.area = getPlayerObject.area;
-        if (matrixAreaRenderingHere === typeWriter.area) {
-            typeWriter.justPrint();
+    chatObjectsArr.forEach(chatObj => {
+        const getPlayerObject = data.playersArr.find(object => object.id === chatObj.id);
+        chatObj.x = getPlayerObject.x;
+        chatObj.y = getPlayerObject.y;
+        chatObj.area = getPlayerObject.area;
+        if (matrixAreaRenderingHere === chatObj.area) {
+            chatObj.justPrint();
         }
     });
     

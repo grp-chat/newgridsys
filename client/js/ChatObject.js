@@ -1,4 +1,4 @@
-class TypeWriter {
+class ChatObject {
     constructor(config) {
         this.text = config.message || "Player here says hello world Player here says hello world";
         this.id = config.id;
@@ -8,7 +8,7 @@ class TypeWriter {
         this.fps = 20;
         this.cellSize = config.cellSize || 27;
         this.padding = config.padding || 2;
-        this.chatContext = this.getContext(1000, 580, "transparent", false);
+        this.chatContext = this.getContext(0, 0, "transparent", false);
         
         this.x = config.x;
         this.y = config.y;
@@ -39,8 +39,8 @@ class TypeWriter {
         return this.context;
     }
     chatContextSettings() {
-        const w = (this.cellSize + this.padding) * this.matrix[0].length - (this.padding);
-        const h = (this.cellSize + this.padding) * this.matrix.length - (this.padding);
+        const w = (this.cellSize + this.padding) * 7 - (this.padding);
+        const h = (this.cellSize + this.padding) * 9 - (this.padding);
 
         this.chatContext.canvas.width = w;
         this.chatContext.canvas.height = h;
@@ -51,7 +51,11 @@ class TypeWriter {
         this.chatContext.canvas.style.background = "transparent";
     }
 
+    resetTypeWriter() {
+        
+    }
     typeWriter(){
+        this.chatContextSettings()
         
         this.char = this.text.substr(0, this.i);  
         // Clear the canvas
@@ -68,7 +72,8 @@ class TypeWriter {
     }
     justPrint() {
 
-        this.chatContext = this.getContext(1000, 580, "transparent", false);
+        this.chatContext = this.getContext(0, 0, "transparent", false);
+        this.chatContextSettings();
         this.chatContext.font = '11px Courier';
         this.chatContext.fillStyle = 'white';
         this.chatContext.fillText(this.char, this.x * (this.cellSize + this.padding), this.y * (this.cellSize));  

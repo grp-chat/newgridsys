@@ -219,12 +219,12 @@ io.sockets.on('connection', function (sock) {
     sock.on('chat-to-server', (data) => {
         io.emit('chat-to-clients', data);
     });
-    sock.on('print-chat-on-canvas', data => {
+    sock.on('createChatObject', data => {
         const getPlayerObject = gridSystem.playersArr.find(object => object.id === data.nickname);
         const message = data.message2;
         // console.log(getPlayerObject)
         const { x, y, area, id } = getPlayerObject;
-        io.emit('print-chat-on-canvas', { x, y, area, message, id })
+        io.emit('createChatObject', { x, y, area, message, id })
         
     });
 
